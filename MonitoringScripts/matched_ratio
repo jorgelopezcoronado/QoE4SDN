@@ -1,0 +1,85 @@
+#! /usr/bin/perl
+
+#Requires a controller IP parameter, example usage (and output):
+### $ ./matched_ratio 157.159.233.58
+### matched_percentage 81
+
+#Return Codes:
+# 1 = wrong parameters.
+# 2 = couldn't perform operation on controller
+# 3 = inconssitent information between queries
+
+use REST::Client;
+use JSON;
+
+#Print usage
+sub help_text
+{
+	my $text = <<ENDTEXT;
+Usage:$0 [-h|--help|--h] <controller_IP>
+	-h 
+		Prints this message, the program help.
+	controller_IP
+		The IP of the controller to collect statistics from.
+ENDTEXT
+	return $text;	
+}
+
+sub feature_name
+{
+	return "matched_percentage";
+}
+
+sub main
+{
+
+
+	if (scalar(@_) != 1)
+	{
+		print("Error! The controller IP must be supplied!\n");
+		print(help_text());
+		exit(1);
+	}
+
+	my ($controller_ip)  = @_;
+
+	my $client = REST::Client->new();
+
+	my $base_request_uri = "http://$controller_ip:8181/onos/v1";
+	my $port_statistics_uri = $base_request_uri . "/statistics/delta/ports";
+	my $flow_statistics_uri = $base_request_uri . "/statistics/flows/tables";
+
+
+	#Start getting the matched packets
+	$client->GET($flow_statistics_uri, {'Authorization' => 'Basic b25vczpyb2Nrcw==', 'Accept' => 'application/json'});
+	if( !(($client->responseCode() eq '200') or ($client->responseCode() eq '201')))
+	{
+    		print "Error! Response Code ".$client->responseCode()."\n";
+    		print "Response\n".$client->responseContent()."\n";
+		exit (2);
+	}
+
+	my $flow_table_stats = from_json($client->responseContent());
+
+	my $matchedPacketCounter = 0;
+	my $lookedupPacketCounter = 0;
+	my $avgMatchedRatio = 0;
+
+	foreach (@{$flow_table_stats->{statistics}})
+	{
+		foreach (@{$_->{table}})
+		{
+			$matchedPacketCounter += $_->{packetsMatched};
+			$lookedupPacketCounter += $_->{packetsLookedUp};
+		}
+	}
+
+	$avgMatchedRatio = $matchedPacketCounter / $lookedupPacketCounter * 100;
+	
+	printf (feature_name()." %.0f\n", $avgMatchedRatio);
+
+}
+
+main(@ARGV);
+
+exit 0;
