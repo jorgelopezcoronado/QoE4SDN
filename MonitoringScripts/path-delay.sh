@@ -11,6 +11,10 @@ CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
 ONOS_USER="${ONOS_USER:-onos}"
 ONOS_PASS="${ONOS_PASS:-rocks}"
 
+DB_IP="${DB_IP:-172.17.0.4}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:-qoe-db}"
+
 set_tz() {
   local container=$1
   docker exec $container cp /usr/share/zoneinfo/Europe/Paris /etc/localtime
@@ -77,6 +81,12 @@ delete_intent() {
   rm resp.txt
 }
 
+insert_metric() {
+  local value=$1
+  query="insert into measure(datetime, \"parameter\", value) values(now(), 'PATH_DELAY', ${value});"
+  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d qoe-db -c "${query}"
+}
+
 main() {
 
   # Check if required tools are installed in hosts
@@ -95,7 +105,11 @@ main() {
   mac_h1=$(get_mac mn.h1 h1-eth1)
   mac_h2=$(get_mac mn.h2 h2-eth1)
   
-  intent_req_date=$(date "+%s.%6N")
+  if [[ $(uname) -eq Darwin ]]; then
+   intent_req_date=$(gdate "+%s.%6N")
+  else
+    intent_req_date=$(date "+%s.%6N")
+  fi
 
   install_intent $mac_h1 $mac_h2
   # Start the packet generation at host 1
@@ -111,13 +125,15 @@ main() {
   date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1"."$2}')
   
   diff=$(bc <<< "$date_captured - $intent_req_date")
-  if [ $diff '<' 1 ]; then
+  if [ "$diff -lt 1" ]; then
      diff=$(echo $diff*1000 | bc -l )
      echo "time diff:" ${diff} "ms"
   else
     echo "time diff:" ${diff}
   fi 
   rm capture.txt
+
+  insert_metric $diff
 
   delete_intent
 }

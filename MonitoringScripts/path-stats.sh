@@ -7,12 +7,16 @@ CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
 ONOS_USER="${ONOS_USER:-onos}"
 ONOS_PASS="${ONOS_PASS:-rocks}"
 
+DB_IP="${DB_IP:-172.17.0.4}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:-qoe-db}"
+
 # The amount of packets generated per second
 GENERATION_RATE=5
 # The total packets to be generated at each iteration
 GENERATION_COUNT=10
 # Total number of iterations
-ITERATIONS=10
+ITERATIONS=5
 
 set_tz() {
   local container=$1
@@ -66,6 +70,13 @@ delete_intent() {
   rm resp.txt
 }
 
+insert_metric() {
+  local type=$1
+  local value=$2
+  query="insert into measure(datetime, \"parameter\", value) values(now(), '${type}', ${value});"
+  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d qoe-db -c "${query}"
+}
+
 main() {
 
     # Check if required tools are installed in host
@@ -78,10 +89,20 @@ main() {
     do 
         generate $GENERATION_RATE $GENERATION_COUNT > results_tmp.txt
         datetime=$(grep -i at results_tmp.txt | awk '{print $8,$9,$10}')
-        max_min_avg=$(grep -i "max rtt" results_tmp.txt | awk '{print $1,$3,$5,$7,$9,$11}')
-        totals=$(grep -i "rcvd" results_tmp.txt | awk '{print $3,$4,$7,$8,$11,$12}')
-        echo "${datetime} ${max_min_avg} ${totals}" >> results.txt
-        echo "10 packets generated at " $(date)
+
+        max_rtt=$(grep -i "max rtt" results_tmp.txt | awk '{print $3}')
+        min_rtt=$(grep -i "max rtt" results_tmp.txt | awk '{print $7}')
+        avg_rtt=$(grep -i "max rtt" results_tmp.txt | awk '{print $11}')
+
+        lost=$(grep -i "rcvd" results_tmp.txt | awk '{print $12}')
+        packet_loss=$(echo "$lost / $GENERATION_COUNT" | bc -l)
+
+        insert_metric "MAX_RTT" ${max_rtt//ms} >/dev/null
+        insert_metric "MIN_RTT" ${min_rtt//ms} >/dev/null
+        insert_metric "AVG_RTT" ${avg_rtt//ms} >/dev/null
+        insert_metric "PACKET_LOSS" ${packet_loss} >/dev/null
+
+        echo "$GENERATION_COUNT packets generated at " $(date)
         i=$[$i+1]
         sleep 5
     done
@@ -89,6 +110,6 @@ main() {
     rm results_tmp.txt
 }
 main
-cat results.txt
+#cat results.txt
 
 exit 0
