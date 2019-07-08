@@ -2,10 +2,18 @@
 
 # Outputs the time delay between a flow request (using intents)
 # and when the flow becomes operational.
+#
+# To run it in OSX is required to install 'coreutils' in order to use
+# 'gdate' and create and alias for it.
+#
 
 CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
 ONOS_USER="${ONOS_USER:-onos}"
 ONOS_PASS="${ONOS_PASS:-rocks}"
+
+DB_IP="${DB_IP:-172.17.0.4}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:-qoe-db}"
 
 set_tz() {
   local container=$1
@@ -63,9 +71,7 @@ install_intent() {
           "ethType" : "0x0800" 
         }
   ]}
-  }' http://"$CONTROLLER_IP":8181/onos/v1/intents
-
-  #touch intent_installed
+  }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
 }
 
 delete_intent() {
@@ -75,15 +81,21 @@ delete_intent() {
   rm resp.txt
 }
 
+insert_metric() {
+  local value=$1
+  query="insert into measure(datetime, \"parameter\", value) values(now(), 'PATH_DELAY', ${value});"
+  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d qoe-db -c "${query}"
+}
+
 main() {
 
   # Check if required tools are installed in hosts
   if [ ! -f nmap_installed ]; then 
-	  install_nmap
+	  install_nmap mn.h1
   fi
 
   if [ ! -f tcpdump_installed ]; then 
-    install_tcpdump
+    install_tcpdump mn.h2
   fi
 
   # Start to capture before send the request to install intent
@@ -92,10 +104,14 @@ main() {
   # Send the install intent request to the controller
   mac_h1=$(get_mac mn.h1 h1-eth1)
   mac_h2=$(get_mac mn.h2 h2-eth1)
-  install_intent $mac_h1 $mac_h2
-  now=$(date "+%F %T")
-  intent_req_date=$(date -jf "%Y-%m-%d %H:%M:%S" "${now}" +"%s")
+  
+  if [[ $(uname) -eq Darwin ]]; then
+   intent_req_date=$(gdate "+%s.%6N")
+  else
+    intent_req_date=$(date "+%s.%6N")
+  fi
 
+  install_intent $mac_h1 $mac_h2
   # Start the packet generation at host 1
   generate
 
@@ -106,9 +122,18 @@ main() {
   echo "Package captured:"
   cat capture.txt
 
-  date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1}')
-  echo "time diff:" $((intent_req_date-date_captured))
+  date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1"."$2}')
+  
+  diff=$(bc <<< "$date_captured - $intent_req_date")
+  if [ "$diff -lt 1" ]; then
+     diff=$(echo $diff*1000 | bc -l )
+     echo "time diff:" ${diff} "ms"
+  else
+    echo "time diff:" ${diff}
+  fi 
   rm capture.txt
+
+  insert_metric $diff
 
   delete_intent
 }
