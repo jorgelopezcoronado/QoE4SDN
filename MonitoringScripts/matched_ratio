@@ -8,6 +8,7 @@
 # 1 = wrong parameters.
 # 2 = couldn't perform operation on controller
 # 3 = inconssitent information between queries
+# 4 = Error with DB insert 
 
 use REST::Client;
 use JSON;
@@ -104,10 +105,16 @@ sub insert_DB
 
 	(my $ratio) = @_;
 
-	my $query = "INSERT INTO measure(current_timestamp, '".feature_name()."', $ratio, 0, $group_id);";	
+	my $query = "INSERT INTO measure (datetime, parameter, value, groupid) VALUES (CURRENT_TIMESTAMP, '".feature_name()."', $ratio, '$group_id');";	
 	my $connection = DBI->connect("DBI:Pg:dbname=$db_name;host=$db_ip", $db_user, $db_pass);
 	my $statement = $connection->prepare($query);
-	my $result = $statement->execute() or die $statement->errstr;
+	my $result = $statement->execute(); 
+	if (!$result)
+	{
+		print $query."\n";
+		print $statement->errstr."\n";
+		exit (4);
+	}
 }
 
 sub main
