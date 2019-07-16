@@ -21,3 +21,4 @@ CREATE TABLE public.measure (
 );
 
 GRANT ALL PRIVILEGES ON TABLE measure TO qoe_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public to qoe_user;
