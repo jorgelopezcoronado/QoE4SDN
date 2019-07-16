@@ -20,4 +20,4 @@ CREATE TABLE public.measure (
 	groupid UUID not NULL
 );
 
-GRANT ALL PRIVILEGES ON TABLE measure TO oqoe_user;
+GRANT ALL PRIVILEGES ON TABLE measure TO qoe_user;
