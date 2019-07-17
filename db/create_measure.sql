@@ -21,3 +21,5 @@ CREATE TABLE public.measure (
 );
 
 GRANT ALL PRIVILEGES ON TABLE measure TO qoe_user;
+
+GRANT ALL PRIVILEGES ON SEQUENCE measure_id_seq TO qoe_user;
