@@ -1,8 +1,10 @@
 #! /usr/bin/perl
 
-#Requires a controller IP parameter, example usage (and output):
-### $ ./matched_ratio 157.159.233.58
-### matched_percentage 81
+#Requires a unique ID (UUID) for grouping the data 
+### $ ./matched_ratio 1174aa8b-4f1b-497a-bf16-3550f8964da7 
+### $
+### On successful completion returns 0. 
+### Unuscessful completion reports to stdout and returns other code. 
 
 #Return Codes:
 # 1 = wrong parameters.
