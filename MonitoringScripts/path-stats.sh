@@ -10,13 +10,14 @@ ONOS_PASS="${ONOS_PASS:-rocks}"
 DB_IP="${DB_IP:-172.17.0.4}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASS="${DB_PASS:-qoe-db}"
+DB_NAME="${DB_NAME:-qoe_db}"
 
 # The amount of packets generated per second
 GENERATION_RATE=5
 # The total packets to be generated at each iteration
 GENERATION_COUNT=10
 # Total number of iterations
-ITERATIONS=5
+ITERATIONS=1
 
 set_tz() {
   local container=$1
@@ -30,15 +31,20 @@ install_nmap() {
   touch nmap_installed
 }
 
+get_mac() {
+	local mac=$(docker exec -i $1 bash -c "cat /sys/class/net/$2/address")
+	echo $mac
+}
+
 generate() {
     local rate=$1
     local count=$2
-	docker exec -i mn.h1 nping -H -q1 --rate $rate -c $count --tcp -p 90 10.0.0.3
+	  docker exec -i mn.h1 nping -H -q1 --rate $rate -c $count --tcp -p 90 10.0.0.3
 }
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp.txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp_1.txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -64,25 +70,34 @@ install_intent() {
 }
 
 delete_intent() {
-  local location=$(grep -i Location resp.txt | awk '{print $2}')
+  local location=$(grep -i Location resp_1.txt | awk '{print $2}')
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp.txt
+  rm resp_1.txt
 }
 
 insert_metric() {
   local type=$1
   local value=$2
-  query="insert into measure(datetime, \"parameter\", value) values(now(), '${type}', ${value});"
-  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d qoe-db -c "${query}"
+  local uuid=$3
+  query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), '${type}', ${value}, '${uuid}');"
+  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
+
+    local uuid=$1
 
     # Check if required tools are installed in host
     if [ ! -f nmap_installed ]; then 
         install_nmap mn.h1
     fi
+
+    # Send the install intent request to the controller
+    mac_h1=$(get_mac mn.h1 h1-eth1)
+    mac_h2=$(get_mac mn.h2 h2-eth1)
+  
+    install_intent $mac_h1 $mac_h2
 
     i=0
     while [ $i -lt $ITERATIONS ]
@@ -97,19 +112,20 @@ main() {
         lost=$(grep -i "rcvd" results_tmp.txt | awk '{print $12}')
         packet_loss=$(echo "$lost / $GENERATION_COUNT" | bc -l)
 
-        insert_metric "MAX_RTT" ${max_rtt//ms} >/dev/null
-        insert_metric "MIN_RTT" ${min_rtt//ms} >/dev/null
-        insert_metric "AVG_RTT" ${avg_rtt//ms} >/dev/null
-        insert_metric "PACKET_LOSS" ${packet_loss} >/dev/null
+        insert_metric "MAX_RTT" ${max_rtt//ms} $uuid >/dev/null
+        insert_metric "MIN_RTT" ${min_rtt//ms} $uuid >/dev/null
+        insert_metric "AVG_RTT" ${avg_rtt//ms} $uuid >/dev/null
+        insert_metric "PACKET_LOSS" ${packet_loss} $uuid >/dev/null
 
         echo "$GENERATION_COUNT packets generated at " $(date)
         i=$[$i+1]
         sleep 5
     done
 
+    delete_intent
+
     rm results_tmp.txt
 }
-main
-#cat results.txt
+main $1
 
 exit 0

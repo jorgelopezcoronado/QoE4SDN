@@ -14,6 +14,7 @@ ONOS_PASS="${ONOS_PASS:-rocks}"
 DB_IP="${DB_IP:-172.17.0.4}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASS="${DB_PASS:-qoe-db}"
+DB_NAME="${DB_NAME:-qoe_db}"
 
 set_tz() {
   local container=$1
@@ -83,12 +84,14 @@ delete_intent() {
 
 insert_metric() {
   local value=$1
-  query="insert into measure(datetime, \"parameter\", value) values(now(), 'PATH_DELAY', ${value});"
-  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d qoe-db -c "${query}"
+  local uuid=$2
+  query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), 'PATH_DELAY', ${value}, '${uuid}');"
+  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
 
+  local uuid=$1
   # Check if required tools are installed in hosts
   if [ ! -f nmap_installed ]; then 
 	  install_nmap mn.h1
@@ -133,10 +136,10 @@ main() {
   fi 
   rm capture.txt
 
-  insert_metric $diff
+  insert_metric $diff $uuid
 
   delete_intent
 }
 
-main
+main $1
 exit 0
