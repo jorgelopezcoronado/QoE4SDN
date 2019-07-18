@@ -47,7 +47,8 @@ generate() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp_2.txt --user $ONOS_USER:$ONOS_PASS  \
+  local timestamp=$4
+	curl -X POST -L -D resp_$timestamp.txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -57,32 +58,7 @@ install_intent() {
     "selector": {
       "criteria": [
         { 
-          "type": "TCP_DST",
-          "tcpPort": 90 
-        }, 
-        {
-        "type": "IP_PROTO", 
-        "protocol": 6
-      }, 
-        {
-          "type" : "ETH_TYPE", 
-          "ethType" : "0x0800" 
-        }
-  ]}
-  }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
-
-  echo $(date) "Intent requested"
-	curl -X POST -L -D resp2.txt --user $ONOS_USER:$ONOS_PASS  \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' -d '{ 
-    "type": "HostToHostIntent", 
-    "appId": "org.onosproject.gui", 
-    "one": "'"$1"'/None",
-    "two": "'"$2"'/None",
-    "selector": {
-      "criteria": [
-        { 
-          "type": "TCP_SRC",
+          "type": "'"$3"'",
           "tcpPort": 90 
         }, 
         {
@@ -99,16 +75,12 @@ install_intent() {
 }
 
 delete_intent() {
-  local location=$(grep -i Location resp_2.txt | awk '{print $2}')
+  local timestamp=$1
+  local location=$(grep -i Location resp_$timestamp.txt | awk '{print $2}')
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp.txt
-
-  local location=$(grep -i Location resp2.txt | awk '{print $2}')
-  location=${location%$'\r'}
-  curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp2.txt
-  rm resp_2.txt
+  
+  rm resp_$timestamp.txt
 }
 
 insert_metric() {
@@ -138,7 +110,10 @@ main() {
     mac_h1=$(get_mac mn.h1 h1-eth1)
     mac_h2=$(get_mac mn.h2 h2-eth1)
   
-    install_intent $mac_h1 $mac_h2
+    intentDst=$(date +%s)
+    install_intent $mac_h1 $mac_h2 "TCP_DST" $intentDst
+    intentSrc=$(echo $intentDst + 1 | bc -l)
+    install_intent $mac_h1 $mac_h2 "TCP_SRC" $intentSrc
 
     generate $GENERATION_RATE $GENERATION_COUNT &
     
@@ -153,7 +128,8 @@ main() {
         sleep 2
     done
 
-    delete_intent
+    delete_intent "$intentDst"
+    delete_intent "$intentSrc"
 }
 
 main $1

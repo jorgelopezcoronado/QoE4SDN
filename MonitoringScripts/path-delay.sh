@@ -50,7 +50,8 @@ get_mac() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp.txt -v --user $ONOS_USER:$ONOS_PASS  \
+  local timestamp=$4
+	curl -X POST -L -D resp_"$timestamp".txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -60,7 +61,7 @@ install_intent() {
     "selector": {
       "criteria": [
         { 
-          "type": "TCP_DST",
+          "type": "'"$3"'",
           "tcpPort": 90 
         }, 
         {
@@ -76,10 +77,11 @@ install_intent() {
 }
 
 delete_intent() {
-  local location=$(grep -i Location resp.txt | awk '{print $2}')
+  local timestamp=$1
+  local location=$(grep -i Location resp_$timestamp.txt | awk '{print $2}')
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp.txt
+  rm resp_$timestamp.txt
 }
 
 insert_metric() {
@@ -109,12 +111,14 @@ main() {
   mac_h2=$(get_mac mn.h2 h2-eth1)
   
   if [[ $(uname) -eq "Darwin" ]]; then
-   intent_req_date=$(date "+%s.%6N")
+    intent_req_date=$(gdate "+%s.%6N")
   else
     intent_req_date=$(date "+%s.%6N")
   fi
 
-  install_intent $mac_h1 $mac_h2
+  intentDst=$(date +%s)
+  install_intent $mac_h1 $mac_h2 "TCP_DST" $intentDst
+  
   # Start the packet generation at host 1
   generate
 
@@ -128,7 +132,7 @@ main() {
   date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1"."$2}')
   
   diff=$(bc <<< "$date_captured - $intent_req_date")
-  if [ "$diff -lt 1" ]; then
+  if [[ "$diff -lt 1" ]]; then
      diff=$(echo $diff*1000 | bc -l )
      echo "time diff:" ${diff} "ms"
   else
@@ -138,7 +142,7 @@ main() {
 
   insert_metric $diff $uuid
 
-  delete_intent
+  delete_intent "$intentDst"
 }
 
 main $1
