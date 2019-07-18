@@ -70,6 +70,32 @@ install_intent() {
         }
   ]}
   }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
+
+  echo $(date) "Intent requested"
+	curl -X POST -L -D resp2.txt --user $ONOS_USER:$ONOS_PASS  \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json' -d '{ 
+    "type": "HostToHostIntent", 
+    "appId": "org.onosproject.gui", 
+    "one": "'"$1"'/None",
+    "two": "'"$2"'/None",
+    "selector": {
+      "criteria": [
+        { 
+          "type": "TCP_SRC",
+          "tcpPort": 90 
+        }, 
+        {
+        "type": "IP_PROTO", 
+        "protocol": 6
+      }, 
+        {
+          "type" : "ETH_TYPE", 
+          "ethType" : "0x0800" 
+        }
+  ]}
+  }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
+
 }
 
 delete_intent() {
@@ -77,6 +103,12 @@ delete_intent() {
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
   rm resp.txt
+
+  local location=$(grep -i Location resp2.txt | awk '{print $2}')
+  location=${location%$'\r'}
+  curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
+  rm resp2.txt
+
 }
 
 insert_metric() {
