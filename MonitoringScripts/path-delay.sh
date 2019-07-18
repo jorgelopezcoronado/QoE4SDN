@@ -50,7 +50,7 @@ get_mac() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp.txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp.txt -v --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -108,8 +108,8 @@ main() {
   mac_h1=$(get_mac mn.h1 h1-eth1)
   mac_h2=$(get_mac mn.h2 h2-eth1)
   
-  if [[ $(uname) -eq Darwin ]]; then
-   intent_req_date=$(gdate "+%s.%6N")
+  if [[ $(uname) -eq "Darwin" ]]; then
+   intent_req_date=$(date "+%s.%6N")
   else
     intent_req_date=$(date "+%s.%6N")
   fi

@@ -44,11 +44,12 @@ generate() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp_1.txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp_1.txt -v --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
     "appId": "org.onosproject.gui", 
+    "priority":100,
     "one": "'"$1"'/None",
     "two": "'"$2"'/None",
     "selector": {
@@ -67,6 +68,18 @@ install_intent() {
         }
   ]}
   }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
+}
+
+install_intent_no_filter() {
+      curl -X POST -L -D resp_1.txt -v --user $ONOS_USER:$ONOS_PASS  \
+    --header 'Content-Type: application/json' \
+    --header 'Accept: application/json' -d '{
+    "type": "HostToHostIntent",
+    "priority":100,
+    "appId": "org.onosproject.gui",
+    "one": "'"$1"'/None",
+    "two": "'"$2"'/None"
+      }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
 }
 
 delete_intent() {
@@ -124,7 +137,7 @@ main() {
 
     delete_intent
 
-    rm results_tmp.txt
+    #rm results_tmp.txt
 }
 main $1
 

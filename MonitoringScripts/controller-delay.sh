@@ -47,7 +47,7 @@ generate() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp.txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp_2.txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -99,7 +99,7 @@ install_intent() {
 }
 
 delete_intent() {
-  local location=$(grep -i Location resp.txt | awk '{print $2}')
+  local location=$(grep -i Location resp_2.txt | awk '{print $2}')
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
   rm resp.txt
@@ -108,7 +108,7 @@ delete_intent() {
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
   rm resp2.txt
-
+  rm resp_2.txt
 }
 
 insert_metric() {
