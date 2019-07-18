@@ -152,8 +152,6 @@ sub main
 	{
 	 	$num_flows++;	
 		$non_used += ($_->{packets} == 0)? 1: 0;	
-		print ("flow ".$_->{id}." ".$_->{packets}."\n");
-		
 	}
 
 	my $ratio = ($non_used != 0)? $non_used / $num_flows * 100: 0;
