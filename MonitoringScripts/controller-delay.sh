@@ -110,9 +110,9 @@ main() {
     mac_h1=$(get_mac mn.h1 h1-eth1)
     mac_h2=$(get_mac mn.h2 h2-eth1)
   
-    intentDst=$(date +%s)
+    intentDst=$(uuidgen | tail -c 12)
     install_intent $mac_h1 $mac_h2 "TCP_DST" $intentDst
-    intentSrc=$(echo $intentDst + 1 | bc -l)
+    intentSrc=$(uuidgen | tail -c 12)
     install_intent $mac_h1 $mac_h2 "TCP_SRC" $intentSrc
 
     generate $GENERATION_RATE $GENERATION_COUNT &

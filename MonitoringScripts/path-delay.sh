@@ -110,14 +110,14 @@ main() {
   mac_h1=$(get_mac mn.h1 h1-eth1)
   mac_h2=$(get_mac mn.h2 h2-eth1)
   
-  if [[ $(uname) -eq "Darwin" ]]; then
+  if [[ $(uname) == "Darwin" ]]; then
     intent_req_date=$(gdate "+%s.%6N")
   else
     intent_req_date=$(date "+%s.%6N")
   fi
 
-  intentDst=$(date +%s)
-  install_intent $mac_h1 $mac_h2 "TCP_DST" $intentDst
+  intentDst=$(uuidgen | tail -c 12)
+  install_intent $mac_h1 $mac_h2 "TCP_DST" ${intentDst}
   
   # Start the packet generation at host 1
   generate
