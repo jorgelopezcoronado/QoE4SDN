@@ -44,7 +44,8 @@ generate() {
 
 install_intent() {
   echo $(date) "Intent requested"
-	curl -X POST -L -D resp_1.txt -v --user $ONOS_USER:$ONOS_PASS  \
+  local timestamp=$4
+	curl -X POST -L -D resp_"${timestamp}".txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 
@@ -55,7 +56,7 @@ install_intent() {
     "selector": {
       "criteria": [
         { 
-          "type": "TCP_DST",
+          "type": "'"$3"'",
           "tcpPort": 90 
         }, 
         {
@@ -70,23 +71,12 @@ install_intent() {
   }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
 }
 
-install_intent_no_filter() {
-      curl -X POST -L -D resp_1.txt -v --user $ONOS_USER:$ONOS_PASS  \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' -d '{
-    "type": "HostToHostIntent",
-    "priority":100,
-    "appId": "org.onosproject.gui",
-    "one": "'"$1"'/None",
-    "two": "'"$2"'/None"
-      }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
-}
-
 delete_intent() {
-  local location=$(grep -i Location resp_1.txt | awk '{print $2}')
+  local timestamp=$1
+  local location=$(grep -i Location resp_${timestamp}.txt | awk '{print $2}')
   location=${location%$'\r'}
   curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp_1.txt
+  $(rm resp_${timestamp}.txt)
 }
 
 insert_metric() {
@@ -110,7 +100,10 @@ main() {
     mac_h1=$(get_mac mn.h1 h1-eth1)
     mac_h2=$(get_mac mn.h2 h2-eth1)
   
-    install_intent $mac_h1 $mac_h2
+    intentDst=$(date +%s)
+    install_intent $mac_h1 $mac_h2 "TCP_DST" $intentDst
+    intentSrc=$(echo $intentDst + 1 | bc -l)
+    install_intent $mac_h1 $mac_h2 "TCP_SRC" $intentSrc
 
     i=0
     while [ $i -lt $ITERATIONS ]
@@ -135,9 +128,10 @@ main() {
         sleep 5
     done
 
-    delete_intent
+    delete_intent "$intentDst"
+    delete_intent "$intentSrc"
 
-    #rm results_tmp.txt
+    rm results_tmp.txt
 }
 main $1
 
