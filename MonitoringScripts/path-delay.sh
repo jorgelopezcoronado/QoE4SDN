@@ -88,7 +88,7 @@ insert_metric() {
   local value=$1
   local uuid=$2
   query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), 'PATH_DELAY', ${value}, '${uuid}');"
-  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
+  export PGPASSWORD=${DB_PASS} && postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
