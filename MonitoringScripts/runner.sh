@@ -14,7 +14,7 @@ main() {
     ./path-stats.sh $uuid  &
     ./controller-delay.sh $uuid &
     ./matched_ratio $uuid &
-    ./unused_rule_ratio $uuid &
+    ./unused_rule_percentage $uuid &
 
     clean
 }

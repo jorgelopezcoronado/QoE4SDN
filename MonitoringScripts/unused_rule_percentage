@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 #Requires a unique ID (UUID) for grouping the data 
-### $ ./matched_ratio 1174aa8b-4f1b-497a-bf16-3550f8964da7 
+### $ ./unused_rule_percentage 1174aa8b-4f1b-497a-bf16-3550f8964da7 
 ### $
 ### On successful completion returns 0. 
 ### Unuscessful completion reports to stdout and returns other code. 
@@ -16,6 +16,8 @@ use REST::Client;
 use JSON;
 use MIME::Base64;
 use DBI;
+use Math::Complex;
+
 
 my $debug = 0;
 
@@ -35,7 +37,7 @@ ENDTEXT
 
 sub feature_name
 {
-	return "MATCHED_PERCENTAGE";
+	return "UNUSED_RULE_PERCENTAGE";
 }
 
 my $controller_ip;
@@ -50,8 +52,7 @@ my $db_pass;
 my $group_id;
 
 ##These are constants... maybe I should've capitalized... but, whatever
-my $port_statistics_uri; 
-my $flow_statistics_uri;
+my $flow_data_uri;
 
 sub setup
 {
@@ -75,8 +76,7 @@ sub setup
 
 	##These are constants... maybe I should've capitalized... but, whatever
 	my $base_request_uri = "http://$controller_ip:8181/onos/v1";
-	$port_statistics_uri = $base_request_uri . "/statistics/delta/ports";
-	$flow_statistics_uri = $base_request_uri . "/statistics/flows/tables";
+	$flow_data_uri = $base_request_uri . "/flows";
 
 	if ($debug)
 	{
@@ -135,7 +135,7 @@ sub main
 	my $client = REST::Client->new();
 
 	#Start getting the matched packets
-	$client->GET($flow_statistics_uri, {'Authorization' => "Basic ".encode_base64($onos_user.":".$onos_pass), 'Accept' => 'application/json'});
+	$client->GET($flow_data_uri, {'Authorization' => "Basic ".encode_base64($onos_user.":".$onos_pass), 'Accept' => 'application/json'});
 	if( !(($client->responseCode() eq '200') or ($client->responseCode() eq '201')))
 	{
     		print "Error! Response Code ".$client->responseCode()."\n";
@@ -143,24 +143,32 @@ sub main
 		exit (2);
 	}
 
-	my $flow_table_stats = from_json($client->responseContent());
+	my $flows = from_json($client->responseContent());
 
-	my $matchedPacketCounter = 0;
-	my $lookedupPacketCounter = 0;
-	my $avgMatchedRatio = 0;
+	my $num_flows = 0;
+	my $non_used  = 0;
 
-	foreach (@{$flow_table_stats->{statistics}})
+	foreach (@{$flows->{flows}})
 	{
-		foreach (@{$_->{table}})
-		{
-			$matchedPacketCounter += $_->{packetsMatched};
-			$lookedupPacketCounter += $_->{packetsLookedUp};
-		}
+	 	$num_flows++;	
+		$non_used += ($_->{packets} == 0)? 1: 0;	
 	}
 
-	$avgMatchedRatio = ($lookedupPacketCounter != 0)? $matchedPacketCounter / $lookedupPacketCounter * 100: 0;
+	my $ratio = ($non_used != 0)? $non_used / $num_flows * 100: 0;
 
-	insert_DB ($avgMatchedRatio);	
+	#my $average  = $packets / $num_flows;
+	#my $squared_error = 0;
+
+	#print($packets." / ".$num_flows."= ".$average."\n");
+	
+	#foreach (@{$flows->{flows}})
+	#{
+	#	$squared_error += ($_->{packets} - $average)*($_->{packets} - $average);
+	#}
+
+	#print ("e^2 = ".$squared_error." s= ".sqrt($squared_error / $num_flows)."\n");
+
+	insert_DB ($ratio);	
 
 }
 
