@@ -39,10 +39,12 @@ get_measures() {
 			matched_percentage IS NOT NULL AND 
 			path_delay IS NOT NULL AND 
 			unused_rule_percentage IS NOT NULL"
-        docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -t -A -F","  -c "${query}" >> $output_file
+        #docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -t -A -F","  -c "${query}" >> $output_file
+
+        export PGPASSWORD=${DB_PASS} && psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -t -A -F","  -c "${query}" >> $output_file
 }
 
-echo "groupid,AVG_RTT,MIN_RTT,MAX_RTT,PACKET_LOSS,CONTROLLER_DEALAY,MATCHED_PERCENTAGE,PATH_DELAY,UNUSED_RULE_PRECENTAGE,LABEL" > $output_file
+echo "groupid,AVG_RTT,MIN_RTT,MAX_RTT,PACKET_LOSS,CONTROLLER_DELAY,MATCHED_PERCENTAGE,PATH_DELAY,UNUSED_RULE_PRECENTAGE,LABEL" > $output_file
 
 get_measures
 
