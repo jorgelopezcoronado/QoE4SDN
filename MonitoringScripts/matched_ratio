@@ -71,7 +71,7 @@ sub setup
 	$db_ip = (exists($ENV{'DB_IP'}))?$ENV{'DB_IP'}:"localhost";
 	$db_name = (exists($ENV{'DB_NAME'}))?$ENV{'DB_NAME'}:"qoe_db";
 	$db_user = (exists($ENV{'DB_USER'}))?$ENV{'DB_USER'}:"qoe_user";
-	$db_pass = (exists($ENV{'DB_PASS'}))?$ENV{'DB_USER'}:"MPCLGP5432!";
+	$db_pass = (exists($ENV{'DB_PASS'}))?$ENV{'DB_PASS'}:"MPCLGP5432!";
 
 	##These are constants... maybe I should've capitalized... but, whatever
 	my $base_request_uri = "http://$controller_ip:8181/onos/v1";
