@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 #Requires a unique ID (UUID) for grouping the data 
-### $ ./unused_rule_ratio 1174aa8b-4f1b-497a-bf16-3550f8964da7 
+### $ ./unused_rule_percentage 1174aa8b-4f1b-497a-bf16-3550f8964da7 
 ### $
 ### On successful completion returns 0. 
 ### Unuscessful completion reports to stdout and returns other code. 
@@ -37,7 +37,7 @@ ENDTEXT
 
 sub feature_name
 {
-	return "unused_rule_ratio";
+	return "UNUSED_RULE_PERCENTAGE";
 }
 
 my $controller_ip;
@@ -72,7 +72,7 @@ sub setup
 	$db_ip = (exists($ENV{'DB_IP'}))?$ENV{'DB_IP'}:"localhost";
 	$db_name = (exists($ENV{'DB_NAME'}))?$ENV{'DB_NAME'}:"qoe_db";
 	$db_user = (exists($ENV{'DB_USER'}))?$ENV{'DB_USER'}:"qoe_user";
-	$db_pass = (exists($ENV{'DB_PASS'}))?$ENV{'DB_USER'}:"MPCLGP5432!";
+	$db_pass = (exists($ENV{'DB_PASS'}))?$ENV{'DB_PASS'}:"MPCLGP5432!";
 
 	##These are constants... maybe I should've capitalized... but, whatever
 	my $base_request_uri = "http://$controller_ip:8181/onos/v1";
