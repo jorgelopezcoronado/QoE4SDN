@@ -46,6 +46,7 @@ function [maxAccuracy, gamma, C, RBFK] = getBestSVMParams(trainlabels, trainfeat
 endfunction
 
 function scaledVector = scale(vector) %scaling to val - m / 2s, soft normalization
+	%The realmin("double") is added to make not 0 the standard deviation, just in case, not to divide by 0.
 	scaledVector = (double(vector) .- mean(vector)) ./ (2 * std(vector) + realmin("double"));
 endfunction;
 
