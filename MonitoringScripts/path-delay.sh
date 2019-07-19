@@ -36,7 +36,7 @@ install_tcpdump() {
 }
 
 capture() {
-	docker exec -d mn.h2 bash -c "tcpdump -tt -i h2-eth1 -c 1 tcp port 90 > capture.txt"
+	docker exec -d mn.h2 bash -c "tcpdump -tt -i h2-eth1 -c 1 tcp port 80 > capture.txt"
 }
 
 generate() {
@@ -62,7 +62,7 @@ install_intent() {
       "criteria": [
         { 
           "type": "'"$3"'",
-          "tcpPort": 90 
+          "tcpPort": 80 
         }, 
         {
         "type": "IP_PROTO", 
@@ -88,7 +88,7 @@ insert_metric() {
   local value=$1
   local uuid=$2
   query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), 'PATH_DELAY', ${value}, '${uuid}');"
-  docker run --rm -e PGPASSWORD=${DB_PASS} postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
+  export PGPASSWORD=${DB_PASS} && postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
