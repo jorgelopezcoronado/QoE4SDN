@@ -84,7 +84,7 @@ insert_metric() {
   local value=$2
   local uuid=$3
   query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), '${type}', ${value}, '${uuid}');"
-  export PGPASSWORD=${DB_PASS} && postgres psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
+  export PGPASSWORD=${DB_PASS} && psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
