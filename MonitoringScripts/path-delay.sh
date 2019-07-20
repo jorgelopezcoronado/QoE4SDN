@@ -40,7 +40,7 @@ capture() {
 }
 
 generate() {
-	docker exec -i mn.h1 nping -c 2 --tcp -p 90 10.0.0.3
+	docker exec -i mn.h1 nping -c 2 --tcp -p 80 10.0.0.3
 }
 
 get_mac() {
