@@ -88,7 +88,7 @@ insert_metric() {
   local value=$2
   local uuid=$3
   if [ $value == "N/A" ]; then 
-    value = -1
+    value=-1
   fi
   query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), '${type}', ${value}, '${uuid}');"
   export PGPASSWORD=${DB_PASS} && psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
