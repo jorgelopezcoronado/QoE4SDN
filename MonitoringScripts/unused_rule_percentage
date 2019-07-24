@@ -140,6 +140,11 @@ sub main
 	{
     		print "Error! Response Code ".$client->responseCode()."\n";
     		print "Response\n".$client->responseContent()."\n";
+		
+		## As in any case it may be that due to traffic perturbations you can't reach the controller, we will insert -1 to the db
+	
+		insert_DB (-1);	
+
 		exit (2);
 	}
 
