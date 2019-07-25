@@ -18,7 +18,7 @@ function [maxAccuracy, gamma, C, RBFK] = getBestSVMParams(trainlabels, trainfeat
 	end;
 
 	for i=-5:15 
-		display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "RBKF", i, j));
+		display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "Linear", i, j));
 		model = svmtrain(trainlabels, trainfeatures, sprintf("-s 0 -t 0 -c %f -g %f -v 5 -q", 2^i, 2^j));
 		if model >= maxAccuracy
 			gamma = j;
@@ -30,10 +30,15 @@ function [maxAccuracy, gamma, C, RBFK] = getBestSVMParams(trainlabels, trainfeat
 
 	tempC = C;
 	tempGamma = gamma;
+	kernel = "RFBK";
+	if (RBFK != true)
+		kernel = "Linear";	
+	end;
+
 	
 	for i=tempC-1:0.25:tempC+1
 		for j=tempGamma -1:0.25:tempGamma+1
-			display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "RBKF", i, j));
+						display(sprintf("Kernel: %s C: 2^%d G: 2^%d", kernel, i, j));
 			model = svmtrain(trainlabels, trainfeatures, sprintf("-s 0 -t %i -c %f -g %f -v 5 -q", 2*RBFK, 2^i, 2^j));
 			if model > maxAccuracy
         	     		gamma = j;
@@ -48,14 +53,6 @@ endfunction
 function scaledVector = scale(vector) %scaling to val - m / 2s, soft normalization
 	%The realmin("double") is added to make not 0 the standard deviation, just in case, not to divide by 0.
 	scaledVector = (double(vector) .- mean(vector)) ./ (2 * std(vector) + realmin("double"));
-endfunction;
-
-function var = ternary(expr, val1, val2)
-	if(expr)
-		var = val1;
-	else
-		var = val2;
-	end;
 endfunction;
 
 function [labels, trainset] = readData (filename)
