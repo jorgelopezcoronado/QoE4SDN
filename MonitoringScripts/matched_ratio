@@ -134,6 +134,10 @@ sub main
 
 	my $client = REST::Client->new();
 
+	## in case the controller does not reply within some time we should consider this timeout... 10 should be enough if the server is not dying 
+	$client->setTimeout(10);
+
+
 	#Start getting the matched packets
 	$client->GET($flow_statistics_uri, {'Authorization' => "Basic ".encode_base64($onos_user.":".$onos_pass), 'Accept' => 'application/json'});
 	if( !(($client->responseCode() eq '200') or ($client->responseCode() eq '201')))
