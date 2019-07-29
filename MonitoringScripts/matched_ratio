@@ -152,7 +152,21 @@ sub main
 		exit (2);
 	}
 
-	my $flow_table_stats = from_json($client->responseContent());
+	my $flow_table_stats = "";
+
+	##Handle potential errors and exits returned by the library 
+	eval 
+	{ 
+		$flow_table_stats = from_json($client->responseContent());
+	}
+	or do
+	{
+		# if the JSON is not well formatted, report a controller error.
+		insert_DB (-1);
+	
+		exit(2);
+	}
+
 
 	my $matchedPacketCounter = 0;
 	my $lookedupPacketCounter = 0;

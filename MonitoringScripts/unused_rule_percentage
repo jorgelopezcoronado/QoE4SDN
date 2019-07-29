@@ -151,7 +151,21 @@ sub main
 		exit (2);
 	}
 
-	my $flows = from_json($client->responseContent());
+	my $flows = "";
+
+	##Handle potential errors and exits returned by the library 
+	eval 
+	{ 
+		$flows = from_json($client->responseContent());
+	}
+	or do
+	{
+		# if the JSON is not well formatted, report a controller error.
+		insert_DB (-1);
+	
+		exit(2);
+	}
+	
 
 	my $num_flows = 0;
 	my $non_used  = 0;
