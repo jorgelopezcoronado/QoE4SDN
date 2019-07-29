@@ -165,8 +165,7 @@ sub main
 		insert_DB (-1);
 	
 		exit(2);
-	}
-
+	};
 
 	my $matchedPacketCounter = 0;
 	my $lookedupPacketCounter = 0;

@@ -164,7 +164,7 @@ sub main
 		insert_DB (-1);
 	
 		exit(2);
-	}
+	};
 	
 
 	my $num_flows = 0;
