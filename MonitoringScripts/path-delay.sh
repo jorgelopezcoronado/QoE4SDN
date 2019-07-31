@@ -7,33 +7,9 @@
 # 'gdate' and create and alias for it.
 #
 
-CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
-ONOS_USER="${ONOS_USER:-onos}"
-ONOS_PASS="${ONOS_PASS:-rocks}"
-
-DB_IP="${DB_IP:-172.17.0.4}"
-DB_USER="${DB_USER:-postgres}"
-DB_PASS="${DB_PASS:-qoe-db}"
-DB_NAME="${DB_NAME:-qoe_db}"
-
-set_tz() {
-  local container=$1
-  docker exec $container cp /usr/share/zoneinfo/Europe/Paris /etc/localtime
-}
-
-install_nmap() {
-  local container=$1
-  set_tz $container
-	docker exec -it $container bash -c "apt-get install nmap -y"
-	touch nmap_installed
-}
-
-install_tcpdump() {
-  local container=$1
-  set_tz $container 
-	docker exec $container bash -c "apt-get install tcpdump -y"
-	touch tcpdump_installed
-}
+source ./setup.sh
+source ./intents.sh
+source ./db.sh
 
 capture() {
 	docker exec -d mn.h2 bash -c "tcpdump -tt -i h2-eth1 -c 1 tcp port 80 > capture.txt"
@@ -41,57 +17,6 @@ capture() {
 
 generate() {
 	docker exec -i mn.h1 nping -c 2 --tcp -p 80 10.0.0.3
-}
-
-get_mac() {
-	local mac=$(docker exec -i $1 bash -c "cat /sys/class/net/$2/address")
-	echo $mac
-}
-
-install_intent() {
-  echo $(date) "Intent requested"
-  local timestamp=$4
-	curl -X POST -L -D resp_"$timestamp".txt --user $ONOS_USER:$ONOS_PASS  \
-    --header 'Content-Type: application/json' \
-    --header 'Accept: application/json' -d '{ 
-    "type": "HostToHostIntent", 
-    "appId": "org.onosproject.gui", 
-    "one": "'"$1"'/None",
-    "two": "'"$2"'/None",
-    "selector": {
-      "criteria": [
-        { 
-          "type": "'"$3"'",
-          "tcpPort": 80 
-        }, 
-        {
-        "type": "IP_PROTO", 
-        "protocol": 6
-      }, 
-        {
-          "type" : "ETH_TYPE", 
-          "ethType" : "0x0800" 
-        }
-  ]}
-  }' http://"$CONTROLLER_IP":8181/onos/v1/intents &
-}
-
-delete_intent() {
-  local timestamp=$1
-  local location=$(grep -i Location resp_$timestamp.txt | awk '{print $2}')
-  location=${location%$'\r'}
-  curl -X DELETE -G --user $ONOS_USER:$ONOS_PASS "${location}"
-  rm resp_$timestamp.txt
-}
-
-insert_metric() {
-  local value=$1
-  local uuid=$2
-  if [ $value == "N/A" ]; then 
-    value=-1
-  fi
-  query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), 'PATH_DELAY', ${value}, '${uuid}');"
-  export PGPASSWORD=${DB_PASS} && psql -h ${DB_IP} -U ${DB_USER} -d ${DB_NAME} -c "${query}"
 }
 
 main() {
@@ -120,7 +45,7 @@ main() {
   fi
 
   intentDst=$(uuidgen | tail -c 12)
-  install_intent $mac_h1 $mac_h2 "TCP_DST" ${intentDst}
+  install_intent $mac_h1 $mac_h2 "TCP_DST" 80 ${intentDst}
   
   # Start the packet generation at host 1
   generate
@@ -143,7 +68,7 @@ main() {
   fi 
   rm capture.txt
 
-  insert_metric $diff $uuid
+  insert_metric "PATH_DELAY" $diff $uuid
 
   delete_intent "$intentDst"
 }
