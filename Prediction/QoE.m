@@ -63,7 +63,16 @@ function [labels, trainset] = readData (filename)
 	%consider doing some scaling?
 endfunction; 
 
-filename = 'data.csv';
+arguments = argv();
+
+[arg_num, dim] = size(arguments);
+
+if (arg_num != 1)
+	display ("Wrong number of arguments, only a filename must be passed!");
+	exit (1);
+end;
+
+filename = arguments{1}; 
 
 [labels, features] = readData(filename);
 
