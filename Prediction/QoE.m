@@ -79,7 +79,7 @@ filename = arguments{1};
 
 [ac, g, c, k] = getBestSVMParams(labels, features);
 
-display(sprintf("C=%f, gamma=%f, maxAccuracy=%f, RBFK=%i\n", c, g, ac, k));
+display(sprintf("C=2^%f, gamma=2^%f, maxAccuracy=%f, RBFK=%i\n", c, g, ac, k));
 
 %params = sprintf("-s 0 -t %i -c %f -g %f -q", 2*k, 2^c, 2^g);
 
