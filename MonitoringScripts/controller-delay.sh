@@ -12,6 +12,10 @@ GENERATION_COUNT=100
 # Total number of iterations
 ITERATIONS=1
 
+source ./setup.sh
+source ./intents.sh
+source ./db.sh
+
 generate() {
     local rate=$1
     local count=$2

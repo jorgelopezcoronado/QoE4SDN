@@ -12,7 +12,7 @@ install_intent() {
   local port=$4
   local identifier=$5
 
-	curl -X POST -L -D resp_"${timestamp}".txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp_"${identifier}".txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 

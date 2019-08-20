@@ -7,9 +7,9 @@ DB_NAME="${DB_NAME:-qoe_db}"
 
 insert_metric() {
   local type=$1
-  local value=$2
+  local value=$(echo $2 | xargs)
   local uuid=$3
-  if [ "$value" == "N/A" ]; then 
+  if [ "$value" == "N/A"] || [ -z "$value" ]; then 
     value=-1
   fi
   query="insert into measure(datetime, \"parameter\", value, groupid) values(now(), '${type}', ${value}, '${uuid}');"
