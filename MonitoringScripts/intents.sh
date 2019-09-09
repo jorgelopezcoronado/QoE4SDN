@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Implements methods to install/delete ONOS intents.
+# Intended to be used as "library"
+
+# Controller connection parameters.
 CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
 ONOS_USER="${ONOS_USER:-onos}"
 ONOS_PASS="${ONOS_PASS:-rocks}"

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Implements methods to interact with the database (postgresql).
+# Intended to be used as "library"
+
+# Connection parameters
 DB_IP="${DB_IP:-172.17.0.4}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASS="${DB_PASS:-qoe-db}"

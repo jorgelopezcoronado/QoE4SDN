@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Implements methods to install the tools required by the monitoring scripts 
+# in the simulated hosts.
+# Intended to be used as "library".
+
 set_tz() {
   local container=$1
   docker exec $container cp /usr/share/zoneinfo/Europe/Paris /etc/localtime

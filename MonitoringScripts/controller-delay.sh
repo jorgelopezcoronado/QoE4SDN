@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Used to perform requests to the statistics endpoint available ONOS
-# the time the controller takes to reply will be captured and stored 
-# in database.
+# Used to perform requests to the statistics endpoint available at ONOS.
+# The time the controller takes to reply will be captured and stored 
+# into the database.
 
 # The amount of packets generated per second
 GENERATION_RATE=5
