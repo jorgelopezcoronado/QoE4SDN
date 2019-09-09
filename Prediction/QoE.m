@@ -18,7 +18,7 @@ function [maxAccuracy, gamma, C, RBFK] = getBestSVMParams(trainlabels, trainfeat
 	end;
 
 	for i=-5:15 
-		display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "RBKF", i, j));
+		display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "Linear", i, j));
 		model = svmtrain(trainlabels, trainfeatures, sprintf("-s 0 -t 0 -c %f -g %f -v 5 -q", 2^i, 2^j));
 		if model >= maxAccuracy
 			gamma = j;
@@ -30,10 +30,15 @@ function [maxAccuracy, gamma, C, RBFK] = getBestSVMParams(trainlabels, trainfeat
 
 	tempC = C;
 	tempGamma = gamma;
+	kernel = "RFBK";
+	if (RBFK != true)
+		kernel = "Linear";	
+	end;
+
 	
 	for i=tempC-1:0.25:tempC+1
 		for j=tempGamma -1:0.25:tempGamma+1
-			display(sprintf("Kernel: %s C: 2^%d G: 2^%d", "RBKF", i, j));
+						display(sprintf("Kernel: %s C: 2^%d G: 2^%d", kernel, i, j));
 			model = svmtrain(trainlabels, trainfeatures, sprintf("-s 0 -t %i -c %f -g %f -v 5 -q", 2*RBFK, 2^i, 2^j));
 			if model > maxAccuracy
         	     		gamma = j;
@@ -50,14 +55,6 @@ function scaledVector = scale(vector) %scaling to val - m / 2s, soft normalizati
 	scaledVector = (double(vector) .- mean(vector)) ./ (2 * std(vector) + realmin("double"));
 endfunction;
 
-function var = ternary(expr, val1, val2)
-	if(expr)
-		var = val1;
-	else
-		var = val2;
-	end;
-endfunction;
-
 function [labels, trainset] = readData (filename)
 	trainset = importdata (filename);
 	[num_rows num_cols] = size(trainset);
@@ -66,14 +63,23 @@ function [labels, trainset] = readData (filename)
 	%consider doing some scaling?
 endfunction; 
 
-filename = 'data.csv';
+arguments = argv();
+
+[arg_num, dim] = size(arguments);
+
+if (arg_num != 1)
+	display ("Wrong number of arguments, only a filename must be passed!");
+	exit (1);
+end;
+
+filename = arguments{1}; 
 
 [labels, features] = readData(filename);
 
 
 [ac, g, c, k] = getBestSVMParams(labels, features);
 
-display(sprintf("C=%f, gamma=%f, maxAccuracy=%f, RBFK=%i\n", c, g, ac, k));
+display(sprintf("C=2^%f, gamma=2^%f, maxAccuracy=%f, RBFK=%i\n", c, g, ac, k));
 
 %params = sprintf("-s 0 -t %i -c %f -g %f -q", 2*k, 2^c, 2^g);
 

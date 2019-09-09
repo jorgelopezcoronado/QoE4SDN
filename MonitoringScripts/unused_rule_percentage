@@ -134,16 +134,38 @@ sub main
 
 	my $client = REST::Client->new();
 
+	## in case the controller does not reply within some time we should consider this timeout... 10 should be enough if the server is not dying 
+	$client->setTimeout(10);
+
 	#Start getting the matched packets
 	$client->GET($flow_data_uri, {'Authorization' => "Basic ".encode_base64($onos_user.":".$onos_pass), 'Accept' => 'application/json'});
 	if( !(($client->responseCode() eq '200') or ($client->responseCode() eq '201')))
 	{
     		print "Error! Response Code ".$client->responseCode()."\n";
     		print "Response\n".$client->responseContent()."\n";
+		
+		## As in any case it may be that due to traffic perturbations you can't reach the controller, we will insert -1 to the db
+	
+		insert_DB (-1);	
+
 		exit (2);
 	}
 
-	my $flows = from_json($client->responseContent());
+	my $flows = "";
+
+	##Handle potential errors and exits returned by the library 
+	eval 
+	{ 
+		$flows = from_json($client->responseContent());
+	}
+	or do
+	{
+		# if the JSON is not well formatted, report a controller error.
+		insert_DB (-1);
+	
+		exit(2);
+	};
+	
 
 	my $num_flows = 0;
 	my $non_used  = 0;
