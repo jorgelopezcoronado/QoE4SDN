@@ -57,15 +57,21 @@ main() {
   echo "Package captured:"
   cat capture.txt
 
-  date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1"."$2}')
+  date_captured=$(awk '{print $1}' capture.txt| tr "." " "| awk '{print $1"."$2}' | xargs)
   
   diff=$(bc <<< "$date_captured - $intent_req_date")
-  if [[ "$diff -lt 1" ]]; then
-     diff=$(echo $diff*1000 | bc -l )
-     echo "time diff:" ${diff} "ms"
+
+  if [[ ! -z "$date_captured" ]];then
+          if [[  $(bc -l <<< "$diff < 1") -eq 1 ]]; then
+                  diff=$(echo $diff*1000 | bc -l )
+                  echo "time diff:" ${diff} "ms"
+          else
+                  echo "time diff:" ${diff}
+          fi
   else
-    echo "time diff:" ${diff}
-  fi 
+          diff=-1
+          echo "time diff: -1"
+  fi
   rm capture.txt
 
   insert_metric "PATH_DELAY" $diff $uuid

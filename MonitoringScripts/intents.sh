@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Implements methods to install/delete ONOS intents.
+# Intended to be used as "library"
+
+# Controller connection parameters.
 CONTROLLER_IP="${CONTROLLER_IP:-localhost}"
 ONOS_USER="${ONOS_USER:-onos}"
 ONOS_PASS="${ONOS_PASS:-rocks}"
@@ -12,7 +16,7 @@ install_intent() {
   local port=$4
   local identifier=$5
 
-	curl -X POST -L -D resp_"${timestamp}".txt --user $ONOS_USER:$ONOS_PASS  \
+	curl -X POST -L -D resp_"${identifier}".txt --user $ONOS_USER:$ONOS_PASS  \
     --header 'Content-Type: application/json' \
     --header 'Accept: application/json' -d '{ 
     "type": "HostToHostIntent", 

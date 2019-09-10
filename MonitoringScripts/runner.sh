@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Used to asynchronously run all the metrics collectors,
-# this way we can farther relate all the collected metrics.
+# this way we can farther relate all the collected metrics 
+# with the same UUID.
 
 
 print_usage() {
