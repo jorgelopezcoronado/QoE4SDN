@@ -2,7 +2,7 @@
 
 A repository for experimental evaluation of the Quality of Experience (QoE) assessment in the context of Software Defined Networking (SDN). Preliminary experimental results clearly demonstrate the necessity of considering QoE parameters, which are not taken into account in traditional networks. Dynamic network (re-) configuration requires monitoring and measuring attributes not only at the network level but also at the control and application planes.
 
-In order to create a [data-set](Predictions/Dataset) that allows obtaining a QoE model for prediction, experiments simulating different scenarios have been executed. The [Internet2](topology.pdf) topology has been simulated as the data-plane using [Containernet](https://github.com/containernet/containernet) and the [Onos SDN controller](https://onosproject.org). The experiments consist of asking users to configure an Onos host-to-host intent (data-path) and later to transmit a file between the hosts previously configured.
+In order to create a [data-set](Prediction/Datasets) that allows obtaining a QoE model for prediction, experiments simulating different scenarios have been executed. The [Internet2](topology.pdf) topology has been simulated as the data-plane using [Containernet](https://github.com/containernet/containernet) and the [Onos SDN controller](https://onosproject.org). The experiments consist of asking users to configure an Onos host-to-host intent (data-path) and later to transmit a file between the hosts previously configured.
 
 ## Relevant QoE Parameters in SDN
 
